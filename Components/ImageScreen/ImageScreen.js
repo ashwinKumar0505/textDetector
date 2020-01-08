@@ -1,5 +1,7 @@
 import React, {Fragment, Component} from 'react';
 import ImagePicker from 'react-native-image-picker';
+import RNTesseractOcr from 'react-native-tesseract-ocr';
+
 import {
   SafeAreaView,
   StyleSheet,
@@ -16,6 +18,19 @@ export default class ImageScreen extends Component {
   state = {
     fileUri: '',
     showFullScreen: false,
+  };
+  getText = imgPath => {
+    const tessOptions = {
+      whitelist: null,
+      blacklist: '1234567890\'!"#$%&/()={}[]+*-_:;<>',
+    };
+    RNTesseractOcr.recognize(imgPath, 'LANG_ENGLISH', tessOptions)
+      .then(result => {
+        console.log('OCR Result: ', result);
+      })
+      .catch(err => {
+        console.log('OCR Error: ', err);
+      });
   };
 
   chooseImage = () => {
@@ -36,6 +51,7 @@ export default class ImageScreen extends Component {
         this.setState({
           fileUri: response.uri,
         });
+        this.getText(response.path);
       }
     });
   };
@@ -56,6 +72,8 @@ export default class ImageScreen extends Component {
         this.setState({
           fileUri: response.uri,
         });
+
+        this.getText(response.path);
       }
     });
   };
@@ -68,8 +86,6 @@ export default class ImageScreen extends Component {
       },
     };
     ImagePicker.launchImageLibrary(options, response => {
-      console.log('Response = ', response);
-
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
@@ -78,6 +94,8 @@ export default class ImageScreen extends Component {
         this.setState({
           fileUri: response.uri,
         });
+
+        this.getText(response.path);
       }
     });
   };
