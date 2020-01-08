@@ -1,5 +1,7 @@
 import React, {Fragment, Component} from 'react';
 import ImagePicker from 'react-native-image-picker';
+import RNMlKit from 'react-native-firebase-mlkit';
+
 import {
   SafeAreaView,
   StyleSheet,
@@ -16,6 +18,16 @@ export default class ImageScreen extends Component {
   state = {
     fileUri: '',
     showFullScreen: false,
+  };
+
+  getText = async imageUri => {
+    await RNMlKit.deviceTextRecognition(imageUri)
+      .then(response => {
+        console.log(response[0].resultText);
+      })
+      .catch(err => {
+        console.log('error occured :' + err);
+      });
   };
 
   chooseImage = () => {
@@ -36,6 +48,8 @@ export default class ImageScreen extends Component {
         this.setState({
           fileUri: response.uri,
         });
+
+        this.getText(response.uri);
       }
     });
   };
@@ -56,6 +70,8 @@ export default class ImageScreen extends Component {
         this.setState({
           fileUri: response.uri,
         });
+
+        this.getText(response.uri);
       }
     });
   };
@@ -68,8 +84,6 @@ export default class ImageScreen extends Component {
       },
     };
     ImagePicker.launchImageLibrary(options, response => {
-      console.log('Response = ', response);
-
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
@@ -78,6 +92,7 @@ export default class ImageScreen extends Component {
         this.setState({
           fileUri: response.uri,
         });
+        this.getText(response.uri);
       }
     });
   };
@@ -194,8 +209,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   images1: {
-    height: '70%',
-    width: '90%',
+    width: '100%',
+    height: undefined,
+    aspectRatio: 1,
   },
   btnParentSection: {
     alignItems: 'center',
