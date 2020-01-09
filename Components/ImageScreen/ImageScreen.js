@@ -1,7 +1,7 @@
 import React, {Fragment, Component} from 'react';
 import ImagePicker from 'react-native-image-picker';
-import RNMlKit from 'react-native-firebase-mlkit';
-
+import {connect} from 'react-redux';
+import {getText} from '../../Store/Action/ActionCreators';
 import {
   SafeAreaView,
   StyleSheet,
@@ -14,20 +14,9 @@ import {
   ToastAndroid,
 } from 'react-native';
 
-export default class ImageScreen extends Component {
+class ImageScreen extends Component {
   state = {
-    fileUri: '',
     showFullScreen: false,
-  };
-
-  getText = async imageUri => {
-    await RNMlKit.deviceTextRecognition(imageUri)
-      .then(response => {
-        console.log(response[0].resultText);
-      })
-      .catch(err => {
-        console.log('error occured :' + err);
-      });
   };
 
   chooseImage = () => {
@@ -41,15 +30,19 @@ export default class ImageScreen extends Component {
     };
     ImagePicker.showImagePicker(options, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        ToastAndroid.show(
+          'Image has been cancelled',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
+        ToastAndroid.show(
+          'Something had gone wrong',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else {
-        this.setState({
-          fileUri: response.uri,
-        });
-
-        this.getText(response.uri);
+        this.props.getTextFromImage(response.uri);
       }
     });
   };
@@ -63,15 +56,19 @@ export default class ImageScreen extends Component {
     };
     ImagePicker.launchCamera(options, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        ToastAndroid.show(
+          'Image has been cancelled',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
+        ToastAndroid.show(
+          'Something had gone wrong',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else {
-        this.setState({
-          fileUri: response.uri,
-        });
-
-        this.getText(response.uri);
+        this.props.getTextFromImage(response.uri);
       }
     });
   };
@@ -85,20 +82,25 @@ export default class ImageScreen extends Component {
     };
     ImagePicker.launchImageLibrary(options, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        ToastAndroid.show(
+          'Image has been cancelled',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
+        ToastAndroid.show(
+          'Something had gone wrong',
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER,
+        );
       } else {
-        this.setState({
-          fileUri: response.uri,
-        });
-        this.getText(response.uri);
+        this.props.getTextFromImage(response.uri);
       }
     });
   };
 
   renderFileUri() {
-    if (this.state.fileUri) {
+    if (this.props.imageUri) {
       if (this.state.showFullScreen) {
         return (
           <Modal
@@ -107,7 +109,7 @@ export default class ImageScreen extends Component {
             transparent={true}>
             <View style={styles.modal}>
               <Image
-                source={{uri: this.state.fileUri}}
+                source={{uri: this.props.imageUri}}
                 style={styles.images1}
               />
               <TouchableOpacity
@@ -125,7 +127,7 @@ export default class ImageScreen extends Component {
         return (
           <TouchableOpacity
             onPress={() => this.setState({showFullScreen: true})}>
-            <Image source={{uri: this.state.fileUri}} style={styles.images} />
+            <Image source={{uri: this.props.imageUri}} style={styles.images} />
           </TouchableOpacity>
         );
       }
@@ -150,8 +152,7 @@ export default class ImageScreen extends Component {
         <StatusBar barStyle="dark-content" />
         <SafeAreaView>
           <View style={styles.ImageScreen}>
-            <Text
-              style={{textAlign: 'center', fontSize: 20, paddingBottom: 10}}>
+            <Text style={styles.heading}>
               Pick Images from Camera & Gallery
             </Text>
             <View style={styles.imageToDisplay}>{this.renderFileUri()}</View>
@@ -182,16 +183,15 @@ export default class ImageScreen extends Component {
 }
 
 const styles = StyleSheet.create({
-  scrollView: {
-    backgroundColor: 'grey',
-  },
-
   ImageScreen: {
     backgroundColor: '#f1f1f6',
     justifyContent: 'center',
-    borderColor: 'black',
     height: '100%',
     alignItems: 'center',
+  },
+  heading: {
+    fontSize: 20,
+    paddingBottom: 10,
   },
   imageToDisplay: {
     padding: 20,
@@ -221,7 +221,6 @@ const styles = StyleSheet.create({
     width: 225,
     height: 50,
     backgroundColor: '#be9fe1',
-    alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 3,
     marginBottom: 10,
@@ -242,3 +241,19 @@ const styles = StyleSheet.create({
     right: 10,
   },
 });
+
+const mapStateToProps = state => {
+  return {
+    imageUri: state.ImageReducer.imageUri,
+  };
+};
+const mapDispatchToProps = dispatch => {
+  return {
+    getTextFromImage: imageUri => dispatch(getText(imageUri)),
+  };
+};
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(ImageScreen);
